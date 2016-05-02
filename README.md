@@ -1,3 +1,11 @@
+>在这个文件夹外面应该有个名为data的文件夹，data文件夹下的两个文件为比赛给出的数据集。
+即：
+
+
+--folder
+
+    --tianchi_music
+    --data
 
 #阿里音乐流行趋势预测大赛，数据图像化模块
 
@@ -41,6 +49,7 @@
 ```python
 ifNoSongTXT()
 ifNoArtistTXT()#PS:这里必须要先执行
+ifNoUserTXT()
 
 #下面的方法可以随意调用
 a=artist('0c80008b0a28d356026f4b1097041689')
@@ -48,4 +57,10 @@ a.plot_artist_play()
 a.plot_artist_fan()
 a.plot_song_play()
 a.plot_song_fan()
+users = user.getAllUsers()
+print(len(users))
+userContent = user.getAllUserContent(users)
+userContent = user.userContentFilter(userContent)
+print(len(userContent))
+user.deplotAllUser(userContent)
 ```

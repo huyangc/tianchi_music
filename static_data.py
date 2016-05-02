@@ -8,12 +8,14 @@ import sys,os
 
 CURRENT_PATH=sys.path[-1]
 ARTIST_FOLDER=os.path.join(CURRENT_PATH,'pic','artist')
+USER_FOLDER=os.path.join(CURRENT_PATH,'pic','user')
 
-ARTIST=os.path.join(CURRENT_PATH,'mars_tianchi_songs.csv')
-SONGS=os.path.join(CURRENT_PATH,'mars_tianchi_user_actions.csv')
+ARTIST=os.path.join(CURRENT_PATH,'../data/mars_tianchi_songs.csv')
+SONGS=os.path.join(CURRENT_PATH,'../data/mars_tianchi_user_actions.csv')
 
 SONG_P_D_C=os.path.join(CURRENT_PATH,'song_p_d_c.txt')
 ARTIST_P_D_C=os.path.join(CURRENT_PATH,'artist_p_d_c.txt')
+USER_P_D_C=os.path.join(CURRENT_PATH,"user_p_d_c.txt")
 
 SONG_FAN=os.path.join(CURRENT_PATH,'song_fan.txt')
 ARTIST_FAN=os.path.join(CURRENT_PATH,'artist_fan.txt')
