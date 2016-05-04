@@ -32,6 +32,8 @@ DAY_SECOND  =sd.DAY_SECOND
 START_WEEK=sd.START_WEEK
 ALL_USER="user.dat"
 ALL_USER_INFO="userinfo.dat"
+USER_SONG_RELATION="user_song.dat"
+USER_SONG_FOLDER = "user_song"
 #--------stable-------------------
 
 '''
@@ -277,6 +279,22 @@ class user(object):
                 ret[id] = userContent[id]
         return ret
 
+    @staticmethod
+    def userSongRelation(userId,songId,userSongRelation):
+        if not os.path.exists(USER_SONG_FOLDER):
+            os.mkdir(USER_SONG_FOLDER)
+        xlabel = "date"
+        ylabel = "counts"
+        songcount = userSongRelation[userId][songId]
+        songcount = np.array(songcount)
+        plt.plot(songcount, "bo", songcount, "b-", marker="o")
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.savefig(os.path.join(USER_SONG_FOLDER, userId+"_"+songId+".png"))
+
+
+
+
 """
 GOT THE 'PLAY','DOWNLOAD' AND 'COLLECT' TIMES IN 'mars_tianchi_user_action.csv' FILE FOR EVERY DAY.
 THEN GOT A 'SONGS' STRUCTURE.
@@ -409,6 +427,22 @@ def ifNoUserTXT(doAnyway=False):
             fw.write(",".join(str(x) for x in user[i][1])+"\n")
             fw.write(",".join(str(x) for x in user[i][2])+"\n")
 
+def getUserSongRelation(doAnyway=False):
+        if not doAnyway:
+            if os.path.exists(USER_SONG_RELATION):
+                usersong = pickle.load(open(USER_SONG_RELATION,'rb'))
+                return usersong
+        usersong = {}    #usersong={userid,{songid,[0,0,0,0,....,0]}}
+        with open(SONGS,'r') as csvfile:     #mars_tianchi_user_actions: user_id,song_id,gmt_create,action_type,Ds
+            spamreader = csv.reader(csvfile,delimiter=",")
+            for row in spamreader:
+                if row[0] not in usersong:
+                    usersong[row[0]] = {}
+                if row[1] not in usersong[row[0]]:
+                    usersong[row[0]][row[1]] = [0 for i in range(DAYS)]
+                usersong[row[0]][row[1]][date2Num(row[4])] +=1
+        pickle.dump(usersong,open(USER_SONG_RELATION,'wb'))
+        return usersong
 
 
 if __name__ == "__main__":
@@ -420,10 +454,13 @@ if __name__ == "__main__":
     # a.plot_artist_fan()
     # a.plot_song_play()
     # a.plot_song_fan()
+    u = user("")
     users = user.getAllUsers()
     print(len(users))
     userContent = user.getAllUserContent(users)
     userContent = user.userContentFilter(userContent)
     print(len(userContent))
-    user.deplotAllUser(userContent)
+    # user.deplotAllUser(userContent)
+    userSongRelation = getUserSongRelation()
+    user.userSongRelation("2c6082cf0d68e244f2a10325e8d1b85b","ecea5fe33e6817d09c395f2910479728",userSongRelation)
     #total time 371.4s
