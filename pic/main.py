@@ -34,6 +34,7 @@ ALL_USER="user.dat"
 ALL_USER_INFO="userinfo.dat"
 USER_SONG_RELATION="user_song.dat"
 USER_SONG_FOLDER = "user_song"
+ALL_SONG = "all_song.dat"
 #--------stable-------------------
 
 '''
@@ -100,7 +101,7 @@ class artist(object):
             artist_id=fr.readline().strip("\n")
             while artist_id:
                 fan = list(map(int, fr.readline().strip("\n").split(",")))
-                if artist_id==self.ARTIST_ID:
+                if artist_id == self.ARTIST_ID:
                     fan=np.array(fan)
                     mu=np.mean(fan)
                     sigma=np.sqrt((fan*fan).sum()/DAYS-mu*mu)
@@ -268,14 +269,14 @@ class user(object):
             plt.clf()
 
     @staticmethod
-    def userContentFilter(userContent,minsum=100):
+    def userContentFilter(userContent,minsum=10,maxvar = 3.5):    #3.5 is the 90% percentile number
         ret = {}
         for id in userContent:
             tempsum = 0;
             tempsum+=np.sum(userContent[id][0])
             tempsum+=np.sum(userContent[id][1])
             tempsum+=np.sum(userContent[id][2])
-            if tempsum>=minsum:
+            if tempsum>=minsum and np.var(userContent[id][0])<=3.5:
                 ret[id] = userContent[id]
         return ret
 
@@ -286,8 +287,8 @@ class user(object):
         xlabel = "date"
         ylabel = "counts"
         songcount = userSongRelation[userId][songId]
-        songcount = np.array(songcount)
-        plt.plot(songcount, "bo", songcount, "b-", marker="o")
+        nparray = np.array(songcount)
+        plt.plot(nparray, "bo", nparray, "b-", marker="o")
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.savefig(os.path.join(USER_SONG_FOLDER, userId+"_"+songId+".png"))
@@ -413,7 +414,7 @@ def ifNoUserTXT(doAnyway=False):
         if os.path.exists(USER_P_D_C):
             return
     user = {}
-    with open(SONGS) as csvfile:     #mars_tianchi_user_actions: user_id,song_id,gmt_create,action_type,Ds
+    with open(SONGS) as csvfile:     # mars_tianchi_user_actions: user_id,song_id,gmt_create,action_type,Ds
         spamreader = csv.reader(csvfile,delimiter=",")
         for row in spamreader:
             if row[0] not in user:
@@ -427,23 +428,47 @@ def ifNoUserTXT(doAnyway=False):
             fw.write(",".join(str(x) for x in user[i][1])+"\n")
             fw.write(",".join(str(x) for x in user[i][2])+"\n")
 
-def getUserSongRelation(doAnyway=False):
+def getUserSongRelation(doAnyway=False,userContent = None):
         if not doAnyway:
             if os.path.exists(USER_SONG_RELATION):
                 usersong = pickle.load(open(USER_SONG_RELATION,'rb'))
                 return usersong
-        usersong = {}    #usersong={userid,{songid,[0,0,0,0,....,0]}}
-        with open(SONGS,'r') as csvfile:     #mars_tianchi_user_actions: user_id,song_id,gmt_create,action_type,Ds
-            spamreader = csv.reader(csvfile,delimiter=",")
-            for row in spamreader:
-                if row[0] not in usersong:
-                    usersong[row[0]] = {}
-                if row[1] not in usersong[row[0]]:
-                    usersong[row[0]][row[1]] = [0 for i in range(DAYS)]
-                usersong[row[0]][row[1]][date2Num(row[4])] +=1
+        if userContent == None:
+            usersong = {}  # usersong={userid,{songid,[0,0,0,0,....,0]}}
+            with open(SONGS, 'r') as csvfile:  # mars_tianchi_user_actions: user_id,song_id,gmt_create,action_type,Ds
+                spamreader = csv.reader(csvfile, delimiter=",")
+                for row in spamreader:
+                    if row[0] not in usersong:
+                        usersong[row[0]] = {}
+                    if row[1] not in usersong[row[0]]:
+                        usersong[row[0]][row[1]] = [0 for i in range(DAYS)]
+                    usersong[row[0]][row[1]][date2Num(row[4])] += 1
+
+
+
         pickle.dump(usersong,open(USER_SONG_RELATION,'wb'))
         return usersong
 
+def getAllSongs(doAnyways=False):
+    if not doAnyways:
+        if os.path.exists(ALL_SONG):
+            ret = pickle.load(open(ALL_SONG,'rb'))
+            return ret
+    ret = set([])
+    with open(SONG_P_D_C,'r') as fr:
+        songs_id=fr.readline().strip("\n")
+        while songs_id:
+            ret.add(songs_id)
+            fr.readline()
+            fr.readline()
+            fr.readline()
+            songs_id=fr.readline().strip("\n")
+    print("song numbers: "+str(len(ret)))
+    pickle.dump(ret,open(ALL_SONG,'wb'))
+    return ret
+
+def saveToLocal(content,fileName):
+    pickle.dump(content,open(fileName,'wb'))
 
 if __name__ == "__main__":
     ifNoSongTXT()
@@ -456,11 +481,15 @@ if __name__ == "__main__":
     # a.plot_song_fan()
     u = user("")
     users = user.getAllUsers()
-    print(len(users))
+    print(len(users))    # 349946
     userContent = user.getAllUserContent(users)
     userContent = user.userContentFilter(userContent)
-    print(len(userContent))
+    saveToLocal(userContent,"userinfo_filtered")
+    print(len(userContent))    # 102736
     # user.deplotAllUser(userContent)
-    userSongRelation = getUserSongRelation()
-    user.userSongRelation("2c6082cf0d68e244f2a10325e8d1b85b","ecea5fe33e6817d09c395f2910479728",userSongRelation)
+    userSongRelation = getUserSongRelation(userContent)
+    songs = getAllSongs()
+    print(len(songs))
+
+    user.userSongRelation("a0702dcf2cf489518b33e3cae29cda2c","6c2c6e5dd10de972e7db73ac0f8678e9",userSongRelation)
     #total time 371.4s
