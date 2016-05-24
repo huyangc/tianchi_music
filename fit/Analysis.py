@@ -120,6 +120,6 @@ if __name__ == "__main__":
     songFeature, training_label = generateFeatures()
     for i in songFeature:
         training_data = pd.DataFrame(np.asmatrix(songFeature[i]))
-        if os.path.exists(i + ".csv"):
+        if not os.path.exists(i + ".csv"):
             training_data.to_csv(i + ".csv")
         trainModelUsingGBR(songFeature[i],training_label[i],i)
