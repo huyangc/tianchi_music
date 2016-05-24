@@ -41,8 +41,11 @@ USER_INFO_FILTER = sd.USER_INFO_FILTER
 SONG_FEATURE = sd.SONG_FEATURES
 SONG_UNIQUE_USER = sd.SONG_UNIQUE_USER
 TRAINING_LABEL = sd.TRAINING_LABEL
+GBR_RESULT = "GBR_result"
 RECENT_DAYS_LIST = [1, 2, 3, 7, 14, 21, 28, 35, 42, 49, 56]
 
+songInfo = pickle.load(open(SONG_INFO, 'rb'))
+songFans = pickle.load(open(SONG_UNIQUE_USER, 'rb'))
 
 def generateFeatures(doAnyway=False):
     if not doAnyway:
@@ -51,8 +54,7 @@ def generateFeatures(doAnyway=False):
             trl = pickle.load(open(TRAINING_LABEL, 'rb'))
             return ret, trl
     song_features = {}
-    songInfo = pickle.load(open(SONG_INFO, 'rb'))
-    songFans = pickle.load(open(SONG_UNIQUE_USER, 'rb'))
+
     training_label = {}
     for i in songInfo:
         features = []
@@ -69,17 +71,14 @@ def generateFeatures(doAnyway=False):
                 # print(songFans)
             label.append(songInfo[i][0][dt])
             features.append(feature)
-        label = np.asarray(label).reshape(len(label), 1)
         training_label[i] = label
         song_features[i] = features
-    # pickle.dump(song_features,open(SONG_FEATURE,'wb'))
+    pickle.dump(song_features,open(SONG_FEATURE,'wb'))
 
     pickle.dump(training_label, open(TRAINING_LABEL, 'wb'))
     return song_features, training_label
 
 def generateTestData(label_data,dt):
-    songInfo = pickle.load(open(SONG_INFO, 'rb'))
-    songFans = pickle.load(open(SONG_UNIQUE_USER, 'rb'))
     feature = []
     for day in RECENT_DAYS_LIST:
         feature.append(np.sum(label_data[dt - day:dt]))
@@ -91,14 +90,31 @@ def generateTestData(label_data,dt):
     return feature
 
 
-def trainModelUsingRFR(training_data, label_data):  # RFR:RandomForestRegressor
-    model = RandomForestRegressor()
-    model.fit(training_data,label_data)
-    for i in range(120,184,1):
+def trainModelUsingRFR(training_data, label_data,songid):  # RFR:RandomForestRegressor
+    model = RandomForestRegressor(n_estimators=100)
+    label = np.asarray(label_data).reshape(len(label_data),1)
+    print (label.shape)
+    model.fit(training_data,pd.DataFrame(label).values.ravel())
+    for i in range(120,183,1):
         feature = generateTestData(label_data,i)
-        ret = model.predict(feature)
-        print(ret)
-        label_data.append(ret)
+        ret = model.predict(np.asarray(feature).reshape(1,-1))
+        print(i,ret[0],songInfo[songid][0][i])
+        label_data.append(ret[0])
+
+
+
+def trainModelUsingGBR(training_data,label_data,songid):
+    fw = open(GBR_RESULT,'a')
+    model = GradientBoostingRegressor()
+    label = np.asarray(label_data).reshape(len(label_data), 1)
+    print(label.shape)
+    model.fit(training_data, pd.DataFrame(label).values.ravel())
+    fw.write(songid+'\n')
+    for i in range(120, 183, 1):
+        feature = generateTestData(label_data, i)
+        ret = model.predict(np.asarray(feature).reshape(1, -1))
+        fw.write(str(i)+'\t'+str(ret[0])+'\t'+str(songInfo[songid][0][i])+'\n')
+        label_data.append(ret[0])
 
 if __name__ == "__main__":
     songFeature, training_label = generateFeatures()
@@ -106,4 +122,4 @@ if __name__ == "__main__":
         training_data = pd.DataFrame(np.asmatrix(songFeature[i]))
         if os.path.exists(i + ".csv"):
             training_data.to_csv(i + ".csv")
-        trainModelUsingRFR(songFeature[i],training_label[i])
+        trainModelUsingGBR(songFeature[i],training_label[i],i)
