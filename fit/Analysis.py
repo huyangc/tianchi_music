@@ -7,6 +7,7 @@ import pandas as pd
 from matplotlib.legend_handler import HandlerLine2D
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import GradientBoostingRegressor
+import xgboost
 
 # --------stable-------------------
 import os, sys
@@ -42,6 +43,7 @@ SONG_FEATURE = sd.SONG_FEATURES
 SONG_UNIQUE_USER = sd.SONG_UNIQUE_USER
 TRAINING_LABEL = sd.TRAINING_LABEL
 GBR_RESULT = "GBR_result"
+TRAINING_CSV_PREFIX = "training_csv/"
 RECENT_DAYS_LIST = [1, 2, 3, 7, 14, 21, 28, 35, 42, 49, 56]
 
 songInfo = pickle.load(open(SONG_INFO, 'rb'))
@@ -63,11 +65,11 @@ def generateFeatures(doAnyway=False):
         for dt in range(60, 120, 1):
             feature = []
             for day in RECENT_DAYS_LIST:
-                feature.append(np.sum(songInfo[i][0][dt - day:dt]))
-                feature.append(np.sum(songInfo[i][1][dt - day:dt]))
-                feature.append(np.sum(songInfo[i][2][dt - day:dt]))
+                feature.append(np.mean(songInfo[i][0][dt - day:dt]))
+                feature.append(np.mean(songInfo[i][1][dt - day:dt]))
+                feature.append(np.mean(songInfo[i][2][dt - day:dt]))
                 feature.append(
-                    0 if songFans.get(i) is None else np.sum([len(songFans[i][j]) for j in range(dt - day, dt)]))
+                    0 if songFans.get(i) is None else np.mean([len(songFans[i][j]) for j in range(dt - day, dt)]))
                 # print(songFans)
             label.append(songInfo[i][0][dt])
             features.append(feature)
@@ -78,27 +80,31 @@ def generateFeatures(doAnyway=False):
     pickle.dump(training_label, open(TRAINING_LABEL, 'wb'))
     return song_features, training_label
 
-def generateTestData(label_data,dt):
+def generateTestData(label_data,dt,songid):
     feature = []
+    lenth = len(label_data)
     for day in RECENT_DAYS_LIST:
-        feature.append(np.sum(label_data[dt - day:dt]))
+        feature.append(np.mean(label_data[lenth - day:lenth]))
         feature.append(0)
         feature.append(0)
         feature.append(
-            0 if songFans.get(i) is None else np.sum([len(songFans[i][j]) for j in range(dt - day, dt)]))
+            0 if songFans.get(songid) is None else np.mean([len(songFans[songid][j]) for j in range(lenth - day, lenth)]))
         # print(songFans)
     return feature
 
 
 def trainModelUsingRFR(training_data, label_data,songid):  # RFR:RandomForestRegressor
+    fw = open("RFR_result",'a')
     model = RandomForestRegressor(n_estimators=100)
     label = np.asarray(label_data).reshape(len(label_data),1)
     print (label.shape)
     model.fit(training_data,pd.DataFrame(label).values.ravel())
+    fw.write(songid + '\n')
     for i in range(120,183,1):
-        feature = generateTestData(label_data,i)
+        feature = generateTestData(label_data, i,songid)
         ret = model.predict(np.asarray(feature).reshape(1,-1))
-        print(i,ret[0],songInfo[songid][0][i])
+        fw.write(str(i) + '\t' + str(ret[0]) + '\t' + str(songInfo[songid][0][i]) + '\n')
+        # print(i,ret[0],songInfo[songid][0][i])
         label_data.append(ret[0])
 
 
@@ -111,15 +117,21 @@ def trainModelUsingGBR(training_data,label_data,songid):
     model.fit(training_data, pd.DataFrame(label).values.ravel())
     fw.write(songid+'\n')
     for i in range(120, 183, 1):
-        feature = generateTestData(label_data, i)
+        feature = generateTestData(label_data,i,songid)
         ret = model.predict(np.asarray(feature).reshape(1, -1))
         fw.write(str(i)+'\t'+str(ret[0])+'\t'+str(songInfo[songid][0][i])+'\n')
+        # print(str(i)+'\t'+str(ret[0])+'\t'+str(songInfo[songid][0][i])+'\n')
         label_data.append(ret[0])
 
+
+songid = "ccf2c7f71fa68ad7c7bf4bee7a970fff"
 if __name__ == "__main__":
     songFeature, training_label = generateFeatures()
-    for i in songFeature:
-        training_data = pd.DataFrame(np.asmatrix(songFeature[i]))
-        if not os.path.exists(i + ".csv"):
-            training_data.to_csv(i + ".csv")
-        trainModelUsingGBR(songFeature[i],training_label[i],i)
+    # # for i in songFeature:
+    #     training_data = pd.DataFrame(np.asmatrix(songFeature[i]))
+    #     if not os.path.exists(TRAINING_CSV_PREFIX):
+    #         os.mkdir(TRAINING_CSV_PREFIX)
+    #     if not os.path.exists(TRAINING_CSV_PREFIX+i + ".csv"):
+    #         training_data.to_csv(i + ".csv")
+    #     trainModelUsingGBR(songFeature[i],training_label[i],i)
+    trainModelUsingGBR(songFeature[songid], training_label[songid], songid)
