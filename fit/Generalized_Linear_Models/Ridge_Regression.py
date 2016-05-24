@@ -4,22 +4,31 @@
 # @email	: c15271843451@gmail.com
 # refer		: http://scikit-learn.org/stable/auto_examples/linear_model/plot_ridge_path.html#example-linear-model-plot-ridge-path-py
 
-
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import linear_model
 
-CURRENT_PATH=sys.path[0]
-ARTIST_FOLDER=os.path.join(CURRENT_PATH,'artist')
+import os,sys
+path = os.getcwd()
+parent_path = os.path.dirname(os.path.dirname(path))
+sys.path.append(parent_path)
 
-ARTIST=os.path.join(CURRENT_PATH,'mars_tianchi_songs.csv')
-SONGS=os.path.join(CURRENT_PATH,'mars_tianchi_user_actions.csv')
-
-SONG_P_D_C=os.path.join(CURRENT_PATH,'song_p_d_c.txt')
-ARTIST_P_D_C=os.path.join(CURRENT_PATH,'artist_p_d_c.txt')
-
-SONG_FAN=os.path.join(CURRENT_PATH,'song_fan.txt')
-ARTIST_FAN=os.path.join(CURRENT_PATH,'artist_fan.txt')
+import static_data as sd
+CURRENT_PATH=sd.CURRENT_PATH
+ARTIST_FOLDER=sd.ARTIST_FOLDER
+USER_FOLDER=sd.USER_FOLDER
+ARTIST=sd.ARTIST
+SONGS=sd.SONGS
+SONG_P_D_C=sd.SONG_P_D_C
+ARTIST_P_D_C=sd.ARTIST_P_D_C
+USER_P_D_C=sd.USER_P_D_C
+SONG_FAN=sd.SONG_FAN
+ARTIST_FAN=sd.ARTIST_FAN
+DAYS=sd.DAYS
+START_UNIX  =sd.START_UNIX
+DAY_SECOND  =sd.DAY_SECOND
+START_WEEK=sd.START_WEEK
 
 """
 {songs_id:bool,songs_id:bool,...,songs_id:bool}

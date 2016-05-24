@@ -30,11 +30,14 @@ DAYS=sd.DAYS
 START_UNIX  =sd.START_UNIX
 DAY_SECOND  =sd.DAY_SECOND
 START_WEEK=sd.START_WEEK
-ALL_USER="user.dat"
-ALL_USER_INFO="userinfo.dat"
-USER_SONG_RELATION="user_song.dat"
-USER_SONG_FOLDER = "user_song"
-ALL_SONG = "all_song.dat"
+ALL_USER=sd.ALL_USER
+ALL_USER_INFO=sd.ALL_USER_INFO
+USER_SONG_RELATION=sd.USER_SONG_RELATION
+USER_SONG_FOLDER = sd.USER_SONG_FOLDER
+ALL_SONG = sd.ALL_SONG
+SONG_INFO = sd.SONG_INFO
+USER_INFO_FILTER=sd.USER_INFO_FILTER
+SONG_UNIQUE_USER = sd.SONG_UNIQUE_USER
 #--------stable-------------------
 
 '''
@@ -305,7 +308,7 @@ user={songs_id:[{},{},{},...,{}],songs_id:[{},{},{},...,{}],songs_id:[{},{},{},.
 """
 def ifNoSongTXT(doAnyway=False):
     if not doAnyway:
-        if os.path.exists(SONG_P_D_C) and os.path.exists(SONG_FAN):
+        if os.path.exists(SONG_P_D_C) and os.path.exists(SONG_FAN) and os.path.exists(SONG_INFO):
             return
 
     user = {}
@@ -329,6 +332,8 @@ def ifNoSongTXT(doAnyway=False):
             fw.write(",".join(str(x) for x in songs[i][1])+"\n")
             fw.write(",".join(str(x) for x in songs[i][2])+"\n")
 
+    pickle.dump(songs,open(SONG_INFO,'wb'))
+    pickle.dump(user,open(SONG_UNIQUE_USER,'wb'))
     with open(SONG_FAN, "w") as fw:
         for i in user:
             fw.write(i+"\n")
@@ -484,7 +489,7 @@ if __name__ == "__main__":
     print(len(users))    # 349946
     userContent = user.getAllUserContent(users)
     userContent = user.userContentFilter(userContent)
-    saveToLocal(userContent,"userinfo_filtered")
+    saveToLocal(userContent,USER_INFO_FILTER)
     print(len(userContent))    # 102736
     # user.deplotAllUser(userContent)
     userSongRelation = getUserSongRelation(userContent)

@@ -26,3 +26,14 @@ START_UNIX 	=1425139200
 DAY_SECOND 	=86400
 
 START_WEEK=7
+
+ALL_USER=os.path.join(CURRENT_PATH,"user.dat")
+ALL_USER_INFO=os.path.join(CURRENT_PATH,"userinfo.dat")
+USER_SONG_RELATION=os.path.join(CURRENT_PATH,"user_song.dat")
+USER_SONG_FOLDER = os.path.join(CURRENT_PATH,"user_song")
+ALL_SONG = os.path.join(CURRENT_PATH,"all_song.dat")
+SONG_INFO = os.path.join(CURRENT_PATH,"song_info.dat")
+USER_INFO_FILTER = os.path.join(CURRENT_PATH,"userinfo_filtered.dat")
+SONG_FEATURES = os.path.join(CURRENT_PATH,"song_feature.dat")
+SONG_UNIQUE_USER = os.path.join(CURRENT_PATH,"song_unique_user.dat")
+TRAINING_LABEL= os.path.join(CURRENT_PATH,"training_label.dat")
